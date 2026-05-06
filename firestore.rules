@@ -13,15 +13,24 @@ service cloud.firestore {
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
 
+    // Connectivity Test
+    match /_connection_test_/{docId} {
+      allow get: if isSignedIn();
+    }
+
     // User Rules
     match /users/{userId} {
       function isValidUser(data) {
-        return data.keys().hasAll(['uid', 'email']) 
+        return data.keys().hasAll(['uid', 'email', 'createdAt']) 
           && data.uid == request.auth.uid 
           && data.email is string
+          && data.createdAt is string
           && (data.streakCount == null || data.streakCount is number)
           && (data.displayName == null || data.displayName is string)
-          && (data.photoURL == null || data.photoURL is string);
+          && (data.photoURL == null || data.photoURL is string)
+          && (data.lastActiveDate == null || data.lastActiveDate is string)
+          && (data.badges == null || data.badges is list)
+          && (data.readingProgress == null || data.readingProgress is map);
       }
 
       allow get: if isOwner(userId);

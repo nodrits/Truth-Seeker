@@ -19,6 +19,8 @@ export default function CommunityView() {
     const unsubscribe = onSnapshot(q, (snap) => {
       const docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Prayer));
       setPrayers(docs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'prayers');
     });
     return unsubscribe;
   }, []);

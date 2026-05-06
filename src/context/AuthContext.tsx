@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { auth, db } from '../lib/firebase';
+import { auth, db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { UserProfile } from '../types';
 
@@ -24,25 +24,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setProfile(userDoc.data() as UserProfile);
-          // Check streak
-          await updateStreak(user.uid, userDoc.data() as UserProfile);
-        } else {
-          const newProfile: UserProfile = {
-            uid: user.uid,
-            email: user.email || '',
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            streakCount: 1,
-            lastActiveDate: new Date().toISOString(),
-            badges: [],
-            readingProgress: {},
-            createdAt: new Date().toISOString(),
-          };
-          await setDoc(doc(db, 'users', user.uid), newProfile);
-          setProfile(newProfile);
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setProfile(userDoc.data() as UserProfile);
+            // Check streak
+            await updateStreak(user.uid, userDoc.data() as UserProfile);
+          } else {
+            const newProfile: UserProfile = {
+              uid: user.uid,
+              email: user.email || '',
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              streakCount: 1,
+              lastActiveDate: new Date().toISOString(),
+              badges: [],
+              readingProgress: {},
+              createdAt: new Date().toISOString(),
+            };
+            await setDoc(doc(db, 'users', user.uid), newProfile);
+            setProfile(newProfile);
+          }
+        } catch (err) {
+          handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
         }
       } else {
         setProfile(null);
@@ -69,11 +73,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       newStreak = 1;
     }
 
-    await updateDoc(doc(db, 'users', uid), {
-      streakCount: newStreak,
-      lastActiveDate: new Date().toISOString(),
-    });
-    setProfile(prev => prev ? { ...prev, streakCount: newStreak, lastActiveDate: new Date().toISOString() } : null);
+    try {
+      await updateDoc(doc(db, 'users', uid), {
+        streakCount: newStreak,
+        lastActiveDate: new Date().toISOString(),
+      });
+      setProfile(prev => prev ? { ...prev, streakCount: newStreak, lastActiveDate: new Date().toISOString() } : null);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `users/${uid}`);
+    }
   };
 
   const signIn = async () => {
@@ -87,8 +95,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateProfile = async (data: Partial<UserProfile>) => {
     if (!user) return;
-    await updateDoc(doc(db, 'users', user.uid), data);
-    setProfile(prev => prev ? { ...prev, ...data } : null);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), data);
+      setProfile(prev => prev ? { ...prev, ...data } : null);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
+    }
   };
 
   return (

@@ -4,7 +4,7 @@ import { Send, Sparkles, Mic, History, User, MessageCircle } from 'lucide-react'
 import { getBibleChatResponse } from '../services/geminiService';
 import { useAuth } from '../context/AuthContext';
 import { ChatMessage } from '../types';
-import { db } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, addDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import ReactMarkdown from 'react-markdown';
 
@@ -27,14 +27,19 @@ export default function ChatView() {
 
   const loadHistory = async () => {
     if (!user) return;
-    const q = query(
-      collection(db, 'users', user.uid, 'chatHistory'),
-      orderBy('createdAt', 'desc'),
-      limit(20)
-    );
-    const snap = await getDocs(q);
-    const history = snap.docs.map(doc => doc.data() as ChatMessage).reverse();
-    setMessages(history);
+    const chatPath = `users/${user.uid}/chatHistory`;
+    try {
+      const q = query(
+        collection(db, chatPath),
+        orderBy('createdAt', 'desc'),
+        limit(20)
+      );
+      const snap = await getDocs(q);
+      const history = snap.docs.map(doc => doc.data() as ChatMessage).reverse();
+      setMessages(history);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.LIST, chatPath);
+    }
   };
 
   const handleSend = async () => {
@@ -51,7 +56,12 @@ export default function ChatView() {
     setLoading(true);
 
     // Save user message
-    await addDoc(collection(db, 'users', user.uid, 'chatHistory'), userMsg);
+    const chatPath = `users/${user.uid}/chatHistory`;
+    try {
+      await addDoc(collection(db, chatPath), userMsg);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, chatPath);
+    }
 
     const response = await getBibleChatResponse(messages, input);
 
@@ -65,7 +75,11 @@ export default function ChatView() {
     setLoading(false);
 
     // Save model message
-    await addDoc(collection(db, 'users', user.uid, 'chatHistory'), modelMsg);
+    try {
+      await addDoc(collection(db, chatPath), modelMsg);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, chatPath);
+    }
   };
 
   const suggestions = [
