@@ -1,0 +1,12 @@
+{
+  "name": "Faith Journey: Bible AI & Daily Devotional",
+  "description": "Your daily companion for faith. Features AI-powered scripture chat, personalized devotionals, prayer journaling, reading plans, and a community prayer wall.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "AI Bible Chat",
+    "Daily Devotionals",
+    "Prayer Journaling",
+    "Reading Plans",
+    "Community Prayer Wall"
+  ]
+}

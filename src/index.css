@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", serif;
+  --font-display: "Playfair Display", serif;
+
+  --color-brand-sage: #f5f5f0;
+  --color-brand-olive: #5A5A40;
+  --color-brand-cream: #fcfcf9;
+  --color-brand-gold: #D4AF37;
+  --color-brand-brown: #3E2723;
+  
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 2.5rem;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-sage text-gray-900 font-sans antialiased;
+  }
+}
+
+.markdown-body {
+  @apply prose prose-stone max-w-none;
+  p { @apply mb-4 leading-relaxed; }
+  strong { @apply text-brand-olive font-semibold; }
+  em { @apply italic; }
+}
+
+.glass-card {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-sm transition-all duration-300;
+}
+
+.nav-active {
+  @apply text-brand-olive font-semibold;
+}
+
+/* Custom scrollbar for a cleaner mobile look */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-brand-olive/20 rounded-full;
+}
